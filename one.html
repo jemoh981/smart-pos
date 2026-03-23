@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JF Print Hub | Smart POS Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+:root {
+    --primary: #1d4ed8;
+    --accent: #38bdf8;
+    --dark: #0f172a;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --light: #f1f5f9;
+}
+
+* {
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    margin: 0;
+    background: var(--light);
+    color: #334155;
+}
+
+.hidden {
+    display: none;
+}
+
+#loader {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, var(--primary), var(--dark));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+}
+
+.loader-logo {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: 4px solid var(--accent);
+    margin-bottom: 20px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ================= HEADER ================= */
+header {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: white;
+    padding: 15px 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    position:relative;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    align-items: center;
+}
+
+/* Logo Section */
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-container img {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 2px solid #fff;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.slogan {
+    font-size: 14px;
+    color: #ffd700;
+}
+
+/* Promo Bar */
+.promo-bar {
+    background: #8b85c0;
+    padding: 6px;
+    border-radius: 6px;
+    overflow: hidden;
+    font-weight: 500;
+    color: #000;
+}
+#main-marquee {
+color: #38bdf8;
+font-size: 14px;
+}
+
+/* Navigation */
+nav {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+nav button {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s ease;
+    align-content: center;
+}
+
+nav button:hover {
+    background: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* ================= LAYOUT ================= */
+.container {
+    max-width: 1100px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
+}
+
+/* ================= TABLES ================= */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+
+th {
+    background: #f8fafc;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+th, td {
+    padding: 12px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+}
+
+/* ================= INPUTS ================= */
+input, select {
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    margin: 5px 0;
+}
+
+/* ================= BUTTONS ================= */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.btn-primary { background: var(--primary); color: white; }
+.btn-success { background: var(--success); color: white; }
+.btn-danger  { background: var(--danger); color: white; }
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+/* ================= RECEIPT ================= */
+#receipt-page {
+    max-width: 420px;
+    margin: 30px auto;
+    padding: 15px;
+}
+
+#receipt-box {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+    color: #000;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+
+.receipt-logo {
+    width: 70px;
+    height: auto;
+    margin-bottom: 8px;
+}
+
+#receipt-box hr {
+    border: none;
+    border-top: 1px dashed #000;
+    margin: 10px 0;
+}
+
+#rec-items {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+#rec-items div {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+#rec-change {
+    font-weight: bold;
+}
+
+/* Print Mode */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    #receipt-page, #receipt-page * {
+        visibility: visible;
+    }
+
+    #receipt-page {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    #receipt-page button {
+        display: none;
+    }
+}
+
+/* ================= FOOTER ================= */
+footer {
+    background: var(--dark);
+    color: #94a3b8;
+    padding: 30px;
+    text-align: center;
+    margin-top: 50px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+    .logo-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    nav {
+        justify-content: center;
+    }
+
+    nav button {
+        width: 100%;
+    }
+}
+    </style>
+</head>
+<body>
+
+<div id="loader">
+    <img src="biz logo.jpeg" class="loader-logo" onerror="this.src='https://via.placeholder.com/110?text=JF+Logo'">
+    <h1>JF PRINT HUB</h1>
+    <p>Fast • Reliable • Professional</p>
+    <p>Loading Smart POS...</p>
+</div>
+
+<div id="app" style="display:none">
+    <header>
+        <div class="logo-container">
+            <img src="biz logo.jpeg" alt="JF LOGO" class="business logo">
+            <div class="logo">JF PRINT HUB</div><br>
+            <div class="slogan">Fast . Reliable .  Professional</div>
+        </div>
+        <div id="marquee-container" class="promo-bar">
+        <marquee id="main-marquee" scrollammount="7">Welcome to JF Print Hub! Quality Printing and secretarial services</marquee></div>
+        <nav>
+            <button onclick="show('dashboard')">🏠Dashboard</button>
+            <button onclick="show('billing')">💰Billing</button>
+            <button onclick="show('inventory')">📦Inventory</button>
+            <button onclick="show('history')">📜History</button>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div id="dashboard" class="card">
+            <h2>Business Summary</h2>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                <div style="background: #eff6ff; padding: 20px; border-radius: 10px; border-left: 5px solid var(--primary);">
+                    <small>Total Revenue</small>
+                    <h3 id="dash-sales">0</h3>
+                </div>
+                <div style="background: #f0fdf4; padding: 20px; border-radius: 10px; border-left: 5px solid var(--success);">
+                    <small>Estimated Profit</small>
+                    <h3 id="dash-profit">0</h3>
+                </div>
+                <div style="background: #fff7ed; padding: 20px; border-radius: 10px; border-left: 5px solid #f97316;">
+                    <small>Transactions</small>
+                    <h3 id="dash-trans">0</h3>
+                </div>
+            </div>
+            <br>
+                <h3>Reports & Analytics</h3>
+                <p>Generate a PDF summary of today's performance and itemized sales.</p>
+            <button class="btn btn-primary" onclick="generateDailyReport()">Download Daily Performance (PDF)</button>
+        </div>
+
+        <div id="billing" class="card hidden">
+            <h2>New Transaction</h2>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <select id="item-select" style="flex-grow: 1;"></select>
+                <input type="number" id="item-qty" value="1" min="1" style="width: 80px;">
+                <button class="btn btn-primary" onclick="addToBill()">Add Item</button>
+            </div>
+
+            <table>
+                <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th><th>Action</th></tr></thead>
+                <tbody id="bill-table"></tbody>
+            </table>
+
+            <div style="text-align: right; margin-top: 20px;">
+                <p>Discount %: <input type="number" id="bill-discount" value="0" min="0" max="100" style="width: 80px;" oninput="calculateTotal()"></p>
+                <p>Payment: 
+                    <select id="payment-method">
+                        <option>Cash</option>
+                        <option>M-Pesa</option>
+                        <option>Card</option>
+                    </select>
+                </p>
+                <p>Amount Paid: <input type="number" id="bill-paid" style="width: 120px;" oninput="calculateTotal()"></p>
+                <hr>
+                <h2>Final: KES <span id="bill-total-display">0</span></h2>
+                <h3 style="color: var(--success);">Change: KES <span id="bill-change-display">0</span></h3>
+                <button class="btn btn-success" style="width: 100%; padding: 15px;" onclick="finalizeSale()">COMPLETE SALE & PRINT</button>
+            </div>
+        </div>
+
+        <div id="inventory" class="card hidden">
+            <h2>Inventory Stock</h2>
+            <table>
+                <thead><tr><th>Service Name</th><th>Sale Price</th><th>Base Cost</th><th>Stock Left</th><th>Action</th></tr></thead>
+                <tbody id="stock-table"></tbody>
+            </table>
+        </div>
+
+        <div id="history" class="card hidden">
+            <h2>Recent History</h2>
+            <div id="history-list" style="max-height: 400px; overflow-y: auto; background: #f8fafc; padding: 15px; border-radius: 8px;"></div>
+            <br>
+            <button class="btn btn-danger" onclick="clearData()">Reset All System Data</button>
+        </div>
+
+        <div id="receipt-page" class="card hidden">
+            <div id="receipt-box">
+                <center>
+                    <img src="biz logo.jpeg" alt="logo" class="receipt-logo"><br>
+                    <strong>JF PRINT HUB</strong><br>
+                    KUTUS, Kenya | 0795 077 967<br>
+                    <small>Professional Printing Hub</small><br>
+                   -------------------------<br>
+                    Date: <small id="rec-date"></small><br>
+                   -------------------------<br>
+                </center>
+                <hr>
+                <div id="rec-items"></div>
+                <hr>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>TOTAL:</span><strong id="rec-total"></strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>PAID:</span><span id="rec-paid"></span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>CHANGE:</span><span id="rec-change"></span>
+                </div>
+                <hr>
+                <center><small>Thank you! Come again.</small></center>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-primary" onclick="window.print()">Print Receipt</button>
+                <button class="btn btn-success" onclick="downloadReceipt()">Save as PDF</button>
+                <button class="btn btn-danger" onclick="show('dashboard')">Back to Home</button>
+            </div>
+        </div>
+    </div>
+
+<footer>
+    <strong>JF Print Hub</strong><br>
+    Your Partner in Quality Printing Solutions.<br>
+    EVADEN HOSTELS<br>
+    Contact: +254 795 077 967 | jemohmutuku@gmail.com
+</footer>
+</div>
+<script>
+/* =========================
+   JF PRINT HUB | SMART POS PRO
+   VAT-INCLUSIVE VERSION
+   ========================= */
+
+/* ===== CONFIG ===== */
+const VAT_RATE = 0.16;
+const LOGO_SRC = "biz logo.jpeg";
+const STORE_KEY = "jfpos_pro_vat_inclusive";
+
+/* ===== SERVICES (PRICES INCLUDE VAT) ===== */
+let services = [
+    { id: 1, name: "B/W Printing", price: 10, cost: 4, stock: 100, soldToday: 0, track: true },
+    { id: 2, name: "Color Printing", price: 10, cost: 15, stock: 50, soldToday: 0, track: true },
+    { id: 3, name: "Photocopy", price: 10, cost: 2, stock: 500, soldToday: 0, track: true },
+    { id: 4, name: "Binding", price: 150, cost: 70, stock: 15, soldToday: 0, track: true },
+    { id: 5, name: "Scanning", price: 20, cost: 5, stock: 999, soldToday: 0, track: false },
+    { id: 6, name: "Passport Photo", price: 50, cost: 20, stock: 999, soldToday: 0, track: false },
+    { id: 7, name: "KRA PIN", price: 100, cost: 0, stock: 999, soldToday: 0, track: false },
+    { id: 8, name: "HELB Application", price: 400, cost: 0, stock: 999, soldToday: 0, track: false },
+    { id: 9, name: "Graphic Design", price: 200, cost: 0, stock: 999, soldToday: 0, track: false },
+    { id: 10, name: "Business Cards", price: 25, cost: 10, stock: 100, soldToday: 0, track: true },
+    { id: 11, name: "Certificates", price: 25, cost: 10, stock: 100, soldToday: 0, track: true },
+    { id: 12, name: "KUCCPS Reg", price: 400, cost: 0, stock: 999, soldToday: 0, track: false },
+    { id: 13, name: "Stickers", price: 30, cost: 10, stock: 100, soldToday: 0, track: true }
+];
+
+/* ===== DATABASE ===== */
+let db = JSON.parse(localStorage.getItem(STORE_KEY)) || {
+    sales: 0,      // VAT inclusive
+    profit: 0,
+    vat: 0,        // Extracted VAT
+    trans: 0,
+    history: []
+};
+
+/* ===== STATE ===== */
+let bill = [];
+let lastReceiptItems = [];
+
+/* ===== HELPERS ===== */
+const $ = id => document.getElementById(id);
+const saveDB = () => localStorage.setItem(STORE_KEY, JSON.stringify(db));
+
+/* ================= NAVIGATION ================= */
+function show(id) {
+    document.querySelectorAll(".container > div").forEach(d => d.classList.add("hidden"));
+    $(id).classList.remove("hidden");
+    updateDashboard();
+    renderStock();
+    renderHistory();
+}
+
+/* ================= DASHBOARD ================= */
+function updateDashboard() {
+    $("dash-sales").innerText = `KES ${db.sales.toLocaleString()}`;
+    $("dash-profit").innerText = `KES ${db.profit.toLocaleString()}`;
+    $("dash-trans").innerText = db.trans;
+
+    $("item-select").innerHTML = services.map(s =>
+        `<option value="${s.id}">${s.name} - KES ${s.price} (VAT Incl)</option>`
+    ).join("");
+}
+
+/* ================= BILLING ================= */
+function addToBill() {
+    const item = services.find(s => s.id == $("item-select").value);
+    const qty = parseInt($("item-qty").value);
+
+    if (!item || qty < 1) return;
+
+    if (item.track && qty > item.stock) {
+        alert("Insufficient stock!");
+        return;
+    }
+
+    const existing = bill.find(b => b.id === item.id);
+    if (existing) {
+        existing.qty += qty;
+        existing.total = existing.qty * existing.price;
+    } else {
+        bill.push({ ...item, qty, total: item.price * qty });
+    }
+
+    renderBill();
+}
+
+function renderBill() {
+    $("bill-table").innerHTML = bill.map((b, i) => `
+        <tr>
+            <td>${b.name}</td>
+            <td>${b.qty}</td>
+            <td>${b.price}</td>
+            <td>${b.total}</td>
+            <td><button class="btn btn-danger" onclick="removeItem(${i})">X</button></td>
+        </tr>
+    `).join("");
+    calculateTotals();
+}
+
+function removeItem(i) {
+    bill.splice(i, 1);
+    renderBill();
+}
+
+/* ================= VAT-INCLUSIVE TOTALS ================= */
+function calculateTotals() {
+    const gross = bill.reduce((a, b) => a + b.total, 0); // VAT INCLUDED
+
+    const discount = parseFloat($("bill-discount").value) || 0;
+    const discountedGross = gross * (1 - discount / 100);
+
+    // Extract VAT from inclusive price
+    const vat = discountedGross * VAT_RATE / (1 + VAT_RATE);
+    const net = discountedGross - vat;
+
+    const paid = parseFloat($("bill-paid").value) || 0;
+
+    $("bill-total-display").innerText = discountedGross.toLocaleString();
+    $("bill-change-display").innerText =
+        Math.max(paid - discountedGross, 0).toLocaleString();
+
+    return {
+        sub: net,       // Net (exclusive)
+        vat: vat,       // VAT portion
+        total: discountedGross,
+        paid: paid
+    };
+}
+
+/* ================= FINALIZE SALE ================= */
+function finalizeSale() {
+    if (!bill.length) return alert("Add items first");
+
+    const t = calculateTotals();
+    if (t.paid < t.total) return alert("Insufficient payment");
+
+    db.sales += t.total;
+    db.vat += t.vat;
+    db.trans++;
+
+    bill.forEach(i => {
+        // Profit uses VAT-exclusive revenue
+        const netUnit = i.price / (1 + VAT_RATE);
+        db.profit += (netUnit - i.cost) * i.qty;
+
+        const s = services.find(x => x.id === i.id);
+        if (s && s.track) s.stock -= i.qty;
+    });
+
+    db.history.unshift(
+        `${new Date().toLocaleString()} | KES ${t.total.toFixed(2)} | ${$("payment-method").value}`
+    );
+
+    saveDB();
+
+    lastReceiptItems = JSON.parse(JSON.stringify(bill));
+    prepareReceipt(t);
+
+    bill = [];
+    $("bill-paid").value = "";
+    show("receipt-page");
+}
+
+/* ================= RECEIPT ================= */
+function prepareReceipt(t) {
+    $("rec-date").innerText = new Date().toLocaleString();
+    $("rec-items").innerHTML = lastReceiptItems.map(i =>
+        `<div><span>${i.name} x${i.qty}</span><span>${i.total}</span></div>`
+    ).join("");
+
+    $("rec-total").innerText = t.total.toLocaleString();
+    $("rec-paid").innerText = t.paid.toLocaleString();
+    $("rec-change").innerText = (t.paid - t.total).toLocaleString();
+}
+
+/* ================= RECEIPT PDF ================= */
+function downloadReceipt() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: [80, 200] });
+
+    const logo = new Image();
+    logo.src = LOGO_SRC;
+
+    logo.onload = () => {
+        doc.addImage(logo, "JPEG", 25, 5, 30, 30);
+        doc.setFontSize(10);
+        doc.text("JF PRINT HUB", 40, 40, { align: "center" });
+        doc.text("KUTUS | 0795 077 967", 40, 45, { align: "center" });
+
+        let y = 55;
+        doc.text("--------------------------------", 5, y); y += 5;
+
+        lastReceiptItems.forEach(i => {
+            doc.text(`${i.name} x${i.qty}`, 5, y);
+            doc.text(`${i.total}`, 75, y, { align: "right" });
+            y += 5;
+        });
+
+        doc.text("--------------------------------", 5, y); y += 5;
+
+        const t = calculateTotals();
+        doc.text(`TOTAL (VAT Incl): ${t.total.toFixed(2)}`, 5, y); y += 5;
+        doc.text(`VAT (16%): ${t.vat.toFixed(2)}`, 5, y); y += 5;
+        doc.text(`PAID: ${t.paid.toFixed(2)}`, 5, y); y += 5;
+        doc.text(`CHANGE: ${(t.paid - t.total).toFixed(2)}`, 5, y);
+
+        doc.save("JF_Receipt.pdf");
+    };
+}
+
+/* ================= DAILY REPORT ================= */
+function generateDailyReport() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const logo = new Image();
+    logo.src = LOGO_SRC;
+
+    logo.onload = () => {
+        doc.addImage(logo, "JPEG", 15, 10, 40, 40);
+        doc.setFontSize(18);
+        doc.text("JF PRINT HUB", 70, 25);
+        doc.setFontSize(12);
+        doc.text("DAILY PERFORMANCE REPORT", 70, 35);
+        doc.text(`Date: ${new Date().toLocaleDateString()}`, 70, 45);
+
+        doc.autoTable({
+            startY: 60,
+            head: [["Transactions"]],
+            body: db.history.map(h => [h]),
+            styles: { fontSize: 10 }
+        });
+
+        let y = doc.lastAutoTable.finalY + 10;
+        doc.text(`Total Revenue (VAT Incl): KES ${db.sales.toFixed(2)}`, 15, y);
+        doc.text(`VAT Collected: KES ${db.vat.toFixed(2)}`, 15, y + 8);
+        doc.text(`Estimated Profit: KES ${db.profit.toFixed(2)}`, 15, y + 16);
+        doc.text(`Transactions: ${db.trans}`, 15, y + 24);
+
+        doc.save("JF_Daily_Report.pdf");
+    };
+}
+
+/* ================= INVENTORY & HISTORY ================= */
+function renderStock() {
+    $("stock-table").innerHTML = services.map(s => `
+        <tr>
+            <td>${s.name}</td>
+            <td>${s.price}</td>
+            <td>${s.cost}</td>
+            <td style="color:${s.stock < 10 ? 'red' : 'inherit'}">${s.stock}</td>
+            <td><button class="btn btn-primary">+</button></td>
+        </tr>
+    `).join("");
+}
+
+function renderHistory() {
+    $("history-list").innerHTML = db.history.length
+        ? db.history.map(h => `<div style="padding:6px;border-bottom:1px solid #ddd">${h}</div>`).join("")
+        : "No transactions yet.";
+}
+
+function clearData() {
+    if (confirm("Reset ALL system data?")) {
+        localStorage.removeItem(STORE_KEY);
+        location.reload();
+    }
+}
+
+/* ================= LOADER ================= */
+window.onload = () => {
+    setTimeout(() => {
+        $("loader").style.display = "none";
+        $("app").style.display = "block";
+        updateDashboard();
+    }, 1500);
+};
+</script>
+</body>
+</html>
